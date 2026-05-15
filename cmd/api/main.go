@@ -7,6 +7,7 @@ import (
 	"aac-hls-stream-prep/internal/api"
 	"aac-hls-stream-prep/internal/storage"
 	"aac-hls-stream-prep/internal/track"
+	"aac-hls-stream-prep/internal/transcoder"
 )
 
 func main() {
@@ -15,8 +16,11 @@ func main() {
 
 	storage := storage.NewLocalStorage("./storage")
 
+	// Create transcoder
+	transcoder := transcoder.NewFFmpegTranscoder()
+
 	// Service
-	service := track.NewService(repo, storage)
+	service := track.NewService(repo, storage, transcoder)
 
 	// Handler
 	handler := api.NewHandler(service)
