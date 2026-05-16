@@ -13,6 +13,11 @@ type Service struct {
 	transcoder *transcoder.FFmpegTranscoder
 }
 
+var bitrateLadder = []string{
+	"96k",
+	"160k",
+}
+
 func NewService(repo Repository, storage *storage.LocalStorage, transcoder *transcoder.FFmpegTranscoder) *Service {
 	return &Service{
 		repo:       repo,
@@ -46,27 +51,36 @@ func (s *Service) UploadTrack(id string, fileReader io.Reader, filename string) 
 		return nil, err
 	}
 
-	// AAC output path
-	aacOutputPath := fmt.Sprintf(
-		"./storage/tracks/%s/track_160k.m4a",
-		id,
-	)
+	var variants []AudioVariant
 
-	// Transcode to AAC
-	err = s.transcoder.TranscodeToAAC(
-		originalPath,
-		aacOutputPath,
-		"160k",
-	)
-	if err != nil {
-		return nil, err
+	// Generate bitrate ladder
+	for _, bitrate := range bitrateLadder {
+		outputPath := fmt.Sprintf(
+			"./storage/tracks/%s/track_%s.m4a",
+			id,
+			bitrate,
+		)
+
+		err := s.transcoder.TranscodeToAAC(
+			originalPath,
+			outputPath,
+			bitrate,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		variants = append(variants, AudioVariant{
+			Bitrate: bitrate,
+			Path:    outputPath,
+		})
 	}
 
 	track := &Track{
 		ID:       id,
 		Status:   StatusReady,
 		FilePath: originalPath,
-		AACPath:  aacOutputPath,
+		Variants: variants,
 	}
 
 	err = s.repo.Save(track)

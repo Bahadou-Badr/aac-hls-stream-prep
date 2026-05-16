@@ -2,6 +2,11 @@ package track
 
 type Status string
 
+type AudioVariant struct {
+	Bitrate string `json:"bitrate"`
+	Path    string `json:"path"`
+}
+
 const (
 	StatusUploaded   Status = "uploaded"
 	StatusProcessing Status = "processing"
@@ -10,8 +15,8 @@ const (
 )
 
 type Track struct {
-	ID       string `json:"id"`
-	Status   Status `json:"status"`
-	FilePath string `json:"file_path"`
-	AACPath  string `json:"aac_path"`
+	ID       string         `json:"id"`
+	Status   Status         `json:"status"`
+	FilePath string         `json:"file_path"`
+	Variants []AudioVariant `json:"variants"`
 }
