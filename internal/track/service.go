@@ -1,6 +1,7 @@
 package track
 
 import (
+	"aac-hls-stream-prep/internal/hls"
 	"aac-hls-stream-prep/internal/storage"
 	"aac-hls-stream-prep/internal/transcoder"
 	"fmt"
@@ -11,6 +12,7 @@ type Service struct {
 	repo       Repository
 	storage    *storage.LocalStorage
 	transcoder *transcoder.FFmpegTranscoder
+	packager   *hls.Packager
 }
 
 var bitrateLadder = []string{
@@ -18,11 +20,12 @@ var bitrateLadder = []string{
 	"160k",
 }
 
-func NewService(repo Repository, storage *storage.LocalStorage, transcoder *transcoder.FFmpegTranscoder) *Service {
+func NewService(repo Repository, storage *storage.LocalStorage, transcoder *transcoder.FFmpegTranscoder, packager *hls.Packager) *Service {
 	return &Service{
 		repo:       repo,
 		storage:    storage,
 		transcoder: transcoder,
+		packager:   packager,
 	}
 }
 
@@ -70,9 +73,30 @@ func (s *Service) UploadTrack(id string, fileReader io.Reader, filename string) 
 			return nil, err
 		}
 
+		hlsDir := fmt.Sprintf(
+			"./storage/tracks/%s/hls_%s",
+			id,
+			bitrate,
+		)
+
+		err = s.packager.PackageToHLS(outputPath, hlsDir)
+
+		if err != nil {
+			return nil, err
+		}
+
 		variants = append(variants, AudioVariant{
 			Bitrate: bitrate,
 			Path:    outputPath,
+			HLSPath: fmt.Sprintf(
+				"%s/playlist.m3u8",
+				hlsDir,
+			),
+			PlaylistURL: fmt.Sprintf(
+				"/streams/%s/%s/playlist.m3u8",
+				id,
+				bitrate,
+			),
 		})
 	}
 

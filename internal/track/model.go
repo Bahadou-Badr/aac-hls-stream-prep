@@ -3,8 +3,10 @@ package track
 type Status string
 
 type AudioVariant struct {
-	Bitrate string `json:"bitrate"`
-	Path    string `json:"path"`
+	Bitrate     string `json:"bitrate"`
+	Path        string `json:"path"`
+	HLSPath     string `json:"hls_path"`
+	PlaylistURL string `json:"playlist_url"`
 }
 
 const (

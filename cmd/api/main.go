@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"aac-hls-stream-prep/internal/api"
+	"aac-hls-stream-prep/internal/hls"
 	"aac-hls-stream-prep/internal/storage"
 	"aac-hls-stream-prep/internal/track"
 	"aac-hls-stream-prep/internal/transcoder"
@@ -19,8 +20,11 @@ func main() {
 	// Create transcoder
 	transcoder := transcoder.NewFFmpegTranscoder()
 
+	// Create packager
+	packager := hls.NewPackager()
+
 	// Service
-	service := track.NewService(repo, storage, transcoder)
+	service := track.NewService(repo, storage, transcoder, packager)
 
 	// Handler
 	handler := api.NewHandler(service)
