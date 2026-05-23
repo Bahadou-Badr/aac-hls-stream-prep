@@ -104,3 +104,28 @@ This project uses:
 
 Instead of legacy MPEG-TS segments, the pipeline generates modern fragmented MP4 (.m4s) outputs with initialization segments (init.mp4).
 
+Modern platforms are moving from legacy MP3 and MPEG-TS
+toward AAC + HLS + CMAF/fMP4 because of:
+
+- better compression efficiency
+- lower latency
+- improved compatibility
+- adaptive bitrate streaming
+- CDN optimization
+
+This project now demonstrates:
+
+- clean architecture
+- service layer
+- worker pools
+- async processing
+- REST APIs
+### Media Engineering
+- AAC encoding
+- bitrate ladders
+- HLS
+- CMAF/fMP4
+Systems Thinking
+ingestion pipeline
+stream preparation
+scalable processing flow
