@@ -4,8 +4,10 @@ import (
 	"aac-hls-stream-prep/internal/hls"
 	"aac-hls-stream-prep/internal/storage"
 	"aac-hls-stream-prep/internal/transcoder"
+	"errors"
 	"fmt"
 	"io"
+	"path/filepath"
 )
 
 type Service struct {
@@ -77,38 +79,33 @@ func (s *Service) ProcessTrack(id string, originalPath string) error {
 	}
 
 	track.Status = StatusProcessing
+	if err := s.repo.Save(track); err != nil {
+		return err
+	}
 
 	var variants []AudioVariant
+	trackDir := filepath.Dir(originalPath)
 
 	for _, bitrate := range bitrateLadder {
 
-		outputPath := fmt.Sprintf(
-			"./storage/tracks/%s/track_%s.m4a",
-			id,
-			bitrate,
-		)
+		outputPath := filepath.Join(trackDir, fmt.Sprintf("track_%s.m4a", bitrate))
 
 		err := s.transcoder.TranscodeToAAC(originalPath, outputPath, bitrate)
 		if err != nil {
-			track.Status = StatusFailed
-			return err
+			return s.failTrack(track, err)
 		}
 
-		hlsDir := fmt.Sprintf("./storage/tracks/%s/hls/%s", id, bitrate)
+		hlsDir := filepath.Join(trackDir, "hls", bitrate)
 
 		err = s.packager.PackageToHLS(outputPath, hlsDir)
 		if err != nil {
-			track.Status = StatusFailed
-			return err
+			return s.failTrack(track, err)
 		}
 
 		variants = append(variants, AudioVariant{
 			Bitrate: bitrate,
 			Path:    outputPath,
-			HLSPath: fmt.Sprintf(
-				"%s/playlist.m3u8",
-				hlsDir,
-			),
+			HLSPath: filepath.Join(hlsDir, "playlist.m3u8"),
 			PlaylistURL: fmt.Sprintf(
 				"/streams/tracks/%s/hls/%s/playlist.m3u8",
 				id,
@@ -121,4 +118,13 @@ func (s *Service) ProcessTrack(id string, originalPath string) error {
 	track.Variants = variants
 
 	return s.repo.Save(track)
+}
+
+func (s *Service) failTrack(track *Track, cause error) error {
+	track.Status = StatusFailed
+	if err := s.repo.Save(track); err != nil {
+		return errors.Join(cause, err)
+	}
+
+	return cause
 }

@@ -45,16 +45,8 @@ func main() {
 	// Router
 	router := api.NewRouter(handler)
 
-	fs := http.FileServer(http.Dir("./storage"))
-
-	http.Handle("/streams/", http.StripPrefix(
-		"/streams/",
-		fs,
-	))
-
-	http.HandleFunc("/tracks/streams", handler.GetStreams)
-
 	log.Println("Server running on :8080")
+
 	err := http.ListenAndServe(":8080", router)
 	if err != nil {
 		log.Fatal(err)
