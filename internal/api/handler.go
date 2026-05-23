@@ -5,15 +5,17 @@ import (
 	"net/http"
 
 	"aac-hls-stream-prep/internal/track"
+	"aac-hls-stream-prep/internal/worker"
 	"aac-hls-stream-prep/pkg/id"
 )
 
 type Handler struct {
 	service *track.Service
+	pool    *worker.Pool
 }
 
-func NewHandler(service *track.Service) *Handler {
-	return &Handler{service: service}
+func NewHandler(service *track.Service, pool *worker.Pool) *Handler {
+	return &Handler{service: service, pool: pool}
 }
 
 // POST /tracks
@@ -47,7 +49,8 @@ func (h *Handler) GetTrack(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) UploadTrack(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseMultipartForm(10 << 20) // 10MB
+
+	err := r.ParseMultipartForm(50 << 20)
 	if err != nil {
 		http.Error(w, "invalid form", http.StatusBadRequest)
 		return
@@ -55,20 +58,64 @@ func (h *Handler) UploadTrack(w http.ResponseWriter, r *http.Request) {
 
 	file, header, err := r.FormFile("file")
 	if err != nil {
-		http.Error(w, "file is required", http.StatusBadRequest)
+		http.Error(w, "file required", http.StatusBadRequest)
 		return
 	}
 	defer file.Close()
 
 	trackID := id.New()
 
-	t, err := h.service.UploadTrack(trackID, file, header.Filename)
+	t, err := h.service.PrepareTrackUpload(
+		trackID,
+		file,
+		header.Filename,
+	)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, t)
+	// Queue background job
+	h.pool.Jobs <- worker.Job{
+		TrackID:      t.ID,
+		OriginalPath: t.FilePath,
+	}
+
+	writeJSON(w, http.StatusAccepted, t)
+}
+
+func (h *Handler) GetStreams(w http.ResponseWriter, r *http.Request) {
+
+	trackID := r.URL.Query().Get("id")
+
+	if trackID == "" {
+		http.Error(w, "track id required", http.StatusBadRequest)
+		return
+	}
+
+	track, err := h.service.GetTrack(trackID)
+	if err != nil {
+		http.Error(w, "track not found", http.StatusNotFound)
+		return
+	}
+
+	var streams []StreamVariant
+
+	for _, variant := range track.Variants {
+
+		streams = append(streams, StreamVariant{
+			Bitrate: variant.Bitrate,
+			URL:     variant.PlaylistURL,
+		})
+	}
+
+	response := StreamsResponse{
+		TrackID: track.ID,
+		Status:  string(track.Status),
+		Streams: streams,
+	}
+
+	writeJSON(w, http.StatusOK, response)
 }
 
 func writeJSON(w http.ResponseWriter, status int, data interface{}) {

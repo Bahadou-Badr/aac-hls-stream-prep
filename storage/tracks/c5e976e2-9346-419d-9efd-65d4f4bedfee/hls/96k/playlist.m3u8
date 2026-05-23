@@ -3,7 +3,7 @@
 #EXT-X-TARGETDURATION:6
 #EXT-X-MEDIA-SEQUENCE:0
 #EXT-X-PLAYLIST-TYPE:VOD
-#EXT-X-MAP:URI="storage\tracks\115f0190-eabc-4705-ac3c-47d863eda75a\hls_96k\init.mp4"
+#EXT-X-MAP:URI="storage\tracks\c5e976e2-9346-419d-9efd-65d4f4bedfee\hls\96k\init.mp4"
 #EXTINF:6.013968,
 segment_000.m4s
 #EXTINF:5.990748,

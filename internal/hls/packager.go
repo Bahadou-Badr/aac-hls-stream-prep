@@ -13,10 +13,7 @@ func NewPackager() *Packager {
 	return &Packager{}
 }
 
-func (p *Packager) PackageToHLS(
-	inputPath string,
-	outputDir string,
-) error {
+func (p *Packager) PackageToHLS(inputPath string, outputDir string) error {
 
 	err := os.MkdirAll(outputDir, os.ModePerm)
 	if err != nil {

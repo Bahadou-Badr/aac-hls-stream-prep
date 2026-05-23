@@ -47,42 +47,59 @@ func (s *Service) GetTrack(id string) (*Track, error) {
 	return s.repo.GetByID(id)
 }
 
-func (s *Service) UploadTrack(id string, fileReader io.Reader, filename string) (*Track, error) {
-	// Save original upload
+func (s *Service) PrepareTrackUpload(id string, fileReader io.Reader, filename string) (*Track, error) {
+
 	originalPath, err := s.storage.Save(id, fileReader, filename)
 	if err != nil {
 		return nil, err
 	}
 
+	track := &Track{
+		ID:       id,
+		Status:   StatusUploaded,
+		FilePath: originalPath,
+		Variants: []AudioVariant{},
+	}
+
+	err = s.repo.Save(track)
+	if err != nil {
+		return nil, err
+	}
+
+	return track, nil
+}
+
+func (s *Service) ProcessTrack(id string, originalPath string) error {
+
+	track, err := s.repo.GetByID(id)
+	if err != nil {
+		return err
+	}
+
+	track.Status = StatusProcessing
+
 	var variants []AudioVariant
 
-	// Generate bitrate ladder
 	for _, bitrate := range bitrateLadder {
+
 		outputPath := fmt.Sprintf(
 			"./storage/tracks/%s/track_%s.m4a",
 			id,
 			bitrate,
 		)
 
-		err := s.transcoder.TranscodeToAAC(
-			originalPath,
-			outputPath,
-			bitrate,
-		)
+		err := s.transcoder.TranscodeToAAC(originalPath, outputPath, bitrate)
 		if err != nil {
-			return nil, err
+			track.Status = StatusFailed
+			return err
 		}
 
-		hlsDir := fmt.Sprintf(
-			"./storage/tracks/%s/hls_%s",
-			id,
-			bitrate,
-		)
+		hlsDir := fmt.Sprintf("./storage/tracks/%s/hls/%s", id, bitrate)
 
 		err = s.packager.PackageToHLS(outputPath, hlsDir)
-
 		if err != nil {
-			return nil, err
+			track.Status = StatusFailed
+			return err
 		}
 
 		variants = append(variants, AudioVariant{
@@ -93,24 +110,15 @@ func (s *Service) UploadTrack(id string, fileReader io.Reader, filename string) 
 				hlsDir,
 			),
 			PlaylistURL: fmt.Sprintf(
-				"/streams/%s/%s/playlist.m3u8",
+				"/streams/tracks/%s/hls/%s/playlist.m3u8",
 				id,
 				bitrate,
 			),
 		})
 	}
 
-	track := &Track{
-		ID:       id,
-		Status:   StatusReady,
-		FilePath: originalPath,
-		Variants: variants,
-	}
+	track.Status = StatusReady
+	track.Variants = variants
 
-	err = s.repo.Save(track)
-	if err != nil {
-		return nil, err
-	}
-
-	return track, nil
+	return s.repo.Save(track)
 }

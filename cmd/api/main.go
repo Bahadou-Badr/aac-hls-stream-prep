@@ -9,6 +9,7 @@ import (
 	"aac-hls-stream-prep/internal/storage"
 	"aac-hls-stream-prep/internal/track"
 	"aac-hls-stream-prep/internal/transcoder"
+	"aac-hls-stream-prep/internal/worker"
 )
 
 func main() {
@@ -26,11 +27,32 @@ func main() {
 	// Service
 	service := track.NewService(repo, storage, transcoder, packager)
 
+	// Worker Pool
+	pool := worker.NewPool(100)
+
+	for i := 1; i <= 3; i++ {
+		w := worker.NewWorker(
+			i,
+			service,
+			pool.Jobs,
+		)
+
+		w.Start()
+	}
 	// Handler
-	handler := api.NewHandler(service)
+	handler := api.NewHandler(service, pool)
 
 	// Router
 	router := api.NewRouter(handler)
+
+	fs := http.FileServer(http.Dir("./storage"))
+
+	http.Handle("/streams/", http.StripPrefix(
+		"/streams/",
+		fs,
+	))
+
+	http.HandleFunc("/tracks/streams", handler.GetStreams)
 
 	log.Println("Server running on :8080")
 	err := http.ListenAndServe(":8080", router)

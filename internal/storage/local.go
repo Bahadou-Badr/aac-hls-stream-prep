@@ -22,7 +22,12 @@ func (s *LocalStorage) Save(trackID string, file io.Reader, filename string) (st
 		return "", err
 	}
 
-	filePath := filepath.Join(dir, filename)
+	//normalize the uploaded filename
+	extension := filepath.Ext(filename)
+
+	normalizedFilename := "original" + extension
+
+	filePath := filepath.Join(dir, normalizedFilename)
 
 	out, err := os.Create(filePath)
 	if err != nil {
