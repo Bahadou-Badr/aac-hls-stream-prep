@@ -21,19 +21,35 @@ Built as a simplified media ingestion pipeline inspired by modern streaming plat
 ---
 
 # Architecture
+### Project Architecture
+```
+main.go        → bootstrap/infrastructure
+router.go      → route registration
+handler.go     → HTTP layer
+service.go     → business logic
+worker/        → async processing
+transcoder/    → FFmpeg
+hls/           → packaging
+storage/       → filesystem abstraction
+```
+
 
 ```text
 Upload Audio
       ↓
 Store Original File
+      ↓ 
+worker queue
+      ↓
+FFmpeg pipeline
       ↓
 AAC Transcoding
       ↓
 Bitrate Ladder Generation
       ↓
-HLS + CMAF Packaging
+HLS/CMAF packaging
       ↓
-Streaming-Ready Output
+HTTP stream delivery
 ```
 ## Tech Stack
 - Go
@@ -112,9 +128,9 @@ toward AAC + HLS + CMAF/fMP4 because of:
 - improved compatibility
 - adaptive bitrate streaming
 - CDN optimization
-
+---
 This project now demonstrates:
-
+### Backend Engineering
 - clean architecture
 - service layer
 - worker pools
@@ -125,7 +141,8 @@ This project now demonstrates:
 - bitrate ladders
 - HLS
 - CMAF/fMP4
-Systems Thinking
-ingestion pipeline
-stream preparation
-scalable processing flow
+
+### Systems Thinking
+- ingestion pipeline
+- stream preparation
+- scalable processing flow
