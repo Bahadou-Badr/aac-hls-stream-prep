@@ -72,7 +72,25 @@ curl -X POST http://localhost:8080/tracks/upload \
 ```
 
 ```
-
+{
+  "id": "c5e976e2-9346-419d-9efd-65d4f4bedfee",
+  "status": "ready",
+  "file_path": "storage\\tracks\\c5e976e2-9346-419d-9efd-65d4f4bedfee\\original.wav",
+  "variants": [
+    {
+      "bitrate": "96k",
+      "path": "./storage/tracks/c5e976e2-9346-419d-9efd-65d4f4bedfee/track_96k.m4a",
+      "hls_path": "./storage/tracks/c5e976e2-9346-419d-9efd-65d4f4bedfee/hls/96k/playlist.m3u8",
+      "playlist_url": "/streams/c5e976e2-9346-419d-9efd-65d4f4bedfee/96k/playlist.m3u8"
+    },
+    {
+      "bitrate": "160k",
+      "path": "./storage/tracks/c5e976e2-9346-419d-9efd-65d4f4bedfee/track_160k.m4a",
+      "hls_path": "./storage/tracks/c5e976e2-9346-419d-9efd-65d4f4bedfee/hls/160k/playlist.m3u8",
+      "playlist_url": "/streams/c5e976e2-9346-419d-9efd-65d4f4bedfee/160k/playlist.m3u8"
+    }
+  ]
+}
 ```
 Generated Output
 ```
