@@ -33,7 +33,7 @@ hls/           → packaging
 storage/       → filesystem abstraction
 ```
 
-
+### Workflow 
 ```text
 Upload Audio
       ↓
@@ -72,21 +72,7 @@ curl -X POST http://localhost:8080/tracks/upload \
 ```
 
 ```
-{
-  "id": "e5e1f1c4-9815-401b-8a63-f76a66ad1139",
-  "status": "ready",
-  "file_path": "storage\\tracks\\e5e1f1c4-9815-401b-8a63-f76a66ad1139\\sample.wav",
-  "variants": [
-    {
-      "bitrate": "96k",
-      "path": "./storage/tracks/e5e1f1c4-9815-401b-8a63-f76a66ad1139/track_96k.m4a"
-    },
-    {
-      "bitrate": "160k",
-      "path": "./storage/tracks/e5e1f1c4-9815-401b-8a63-f76a66ad1139/track_160k.m4a"
-    }
-  ]
-}
+
 ```
 Generated Output
 ```
